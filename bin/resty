@@ -19,7 +19,9 @@ our $VERSION = '0.25';
 # OpenResty's build system would patch the following line to initialize
 # the $nginx_path variable to point to the path of its own nginx binary
 # directly.
-my $nginx_path;
+
+# add by chrono
+my $nginx_path = '/usr/local/nginx/sbin/nginx';
 
 my $WNOHANG = 1;
 
@@ -805,6 +807,16 @@ $http_conf_lines
         local stderr = io.stderr
         local ffi = require "ffi"
 
+        -- add by chrono
+        -- copied from lua-resty-core ngx.process.lua
+        ffi.cdef[[
+        void ngx_http_lua_ffi_process_signal_graceful_exit(void);
+        ]]
+
+        local function signal_graceful_exit()
+            ffi.C.ngx_http_lua_ffi_process_signal_graceful_exit()
+        end
+
         local function handle_err(err)
             if err then
                 err = string.gsub(err, "^init_worker_by_lua:%d+: ", "")
@@ -821,8 +833,8 @@ $http_conf_lines
                 error("at least ngx_lua 0.10.9 is required")
             end
 
-            local signal_graceful_exit =
-                require("ngx.process").signal_graceful_exit
+            --local signal_graceful_exit =
+            --    require("ngx.process").signal_graceful_exit
             if not signal_graceful_exit then
                 error("lua-resty-core library is too old; "
                       .. "missing the signal_graceful_exit() function "
